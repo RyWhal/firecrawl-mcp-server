@@ -1,4 +1,4 @@
-app = "firecrawl-rjpw-space"
+app = "firecrawl-mcp-server"
 primary_region = "iad"
 
 [build]
