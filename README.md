@@ -109,6 +109,85 @@ env HTTP_STREAMABLE_SERVER=true FIRECRAWL_API_KEY=fc-YOUR_API_KEY npx -y firecra
 
 Use the url: http://localhost:3000/mcp
 
+## Deploying as an independent service on Fly.io
+
+This repository now includes:
+
+- `fly.toml` for Fly.io app/runtime configuration
+- `.github/workflows/deploy-fly.yml` for automated deploys on push to `main`
+
+### Manual setup (one-time)
+
+1. **Install prerequisites**
+   - Install [Fly CLI (`flyctl`)](https://fly.io/docs/flyctl/install/)
+   - Ensure you have a Fly.io account and are logged in:
+
+   ```bash
+   fly auth login
+   ```
+
+2. **Create (or reuse) a Fly app**
+
+   ```bash
+   fly apps create <your-fly-app-name>
+   ```
+
+   Then update `app` in `fly.toml` to match your app name.
+
+3. **Set required runtime secret(s)**
+
+   For a self-hosted Firecrawl backend, set your Firecrawl API URL (and API key if your backend requires one):
+
+   ```bash
+   fly secrets set FIRECRAWL_API_URL=https://<your-firecrawl-api-host> --app <your-fly-app-name>
+   # Optional when your self-hosted backend enforces auth:
+   fly secrets set FIRECRAWL_API_KEY=<your-self-hosted-firecrawl-key> --app <your-fly-app-name>
+   ```
+
+4. **Deploy manually once to verify**
+
+   ```bash
+   fly deploy --remote-only --config fly.toml --app <your-fly-app-name>
+   ```
+
+5. **Attach your custom domain (`firecrawl.rjpw.space`)**
+
+   ```bash
+   fly certs add firecrawl.rjpw.space --app <your-fly-app-name>
+   fly certs show firecrawl.rjpw.space --app <your-fly-app-name>
+   ```
+
+   Then create a DNS `CNAME` record for `firecrawl.rjpw.space` pointing to `<your-fly-app-name>.fly.dev`.
+
+6. **Verify service health**
+
+   ```bash
+   fly status --app <your-fly-app-name>
+   curl https://firecrawl.rjpw.space/health
+   ```
+
+### GitHub Actions auto-deploy setup
+
+1. Create a Fly access token:
+
+   ```bash
+   fly tokens create deploy
+   ```
+
+2. In GitHub, go to **Settings → Secrets and variables → Actions** and add:
+   - `FLY_API_TOKEN`: the token from step 1
+
+3. Commit and push to `main`.
+   - The `Deploy to Fly.io` workflow will run automatically.
+   - You can also run it manually from **Actions → Deploy to Fly.io → Run workflow**.
+
+### Runtime behavior on Fly
+
+- The service runs in HTTP streamable MCP mode (`HTTP_STREAMABLE_SERVER=true`)
+- It listens on port `3000` internally (`PORT=3000`)
+- Health checks are served at `/health`
+- MCP endpoint is available at `/mcp`
+
 ### Installing via Smithery (Legacy)
 
 To install Firecrawl for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@mendableai/mcp-server-firecrawl):
