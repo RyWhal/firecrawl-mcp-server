@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Normalize owner for GHCR (lowercase)
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -34,6 +37,6 @@ jobs:
           context: .
           file: ./Dockerfile.service
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/firecrawl-mcp-server-alpha:latest
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/firecrawl-mcp-server-alpha:latest
+          tags: ghcr.io/${{ env.OWNER_LC }}/firecrawl-mcp-server-alpha:latest
+          cache-from: type=registry,ref=ghcr.io/${{ env.OWNER_LC }}/firecrawl-mcp-server-alpha:latest
           cache-to: type=inline
